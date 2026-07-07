@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-service
+  labels:
+    app: api-service
+
+spec:
+  # How many replicas?
+  replicas: 3
+  
+  # Pod selector: which pods does this deployment manage?
+  selector:
+    matchLabels:
+      app: api-service
+  
+  # Pod template: what each pod looks like
+  template:
+    metadata:
+      labels:
+        app: api-service
+        version: "1.0"
+    
+    spec:
+      containers:
+      - name: api
+        image: api-service:1.0
+        ports:
+        - containerPort: 8080
+        
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 5
+  
+  # Rolling update strategy
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1          # Max 1 extra pod during update
+      maxUnavailable: 0    # Keep all pods available
